@@ -13,7 +13,7 @@ Création du fichier XML
 
 
 /** create XML file */
-$mysqli = new mysqli("localhost", "root", "Gregsaimoen12@", "ecfc6");
+$mysqli = new mysqli("localhost", "Gregory", "Gregsaimoen12@", "ecfc6");
 
 /* check connection */
 if ($mysqli->connect_errno) {
