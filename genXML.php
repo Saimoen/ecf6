@@ -1,11 +1,23 @@
 <?php
 
-/** create XML file */ 
-$mysqli = new mysqli("localhost", "Gregory", "Gregsaimoen12@", "ecfc6");
+
+
+
+
+/* 
+
+Création du fichier XML
+
+*/
+
+
+
+/** create XML file */
+$mysqli = new mysqli("localhost", "root", "Gregsaimoen12@", "ecfc6");
 
 /* check connection */
 if ($mysqli->connect_errno) {
-    echo "Connect failed ".$mysqli->connect_error;
+    echo "Connect failed " . $mysqli->connect_error;
     exit();
 }
 
@@ -28,7 +40,7 @@ if ($result = $mysqli->query($querySalaries)) {
     while ($row = $result->fetch_assoc()) {
         array_push($salariesArray, $row);
     }
-  
+
     if (count($salariesArray)) {
         createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
     }
@@ -39,57 +51,68 @@ if ($result = $mysqli->query($querySalaries)) {
 /* Ajoute les informations de la table Bulletin */
 if ($result = $mysqli->query($queryBulletin)) {
 
-   /* fetch associative array */
-   while ($row = $result->fetch_assoc()) {
-       array_push($bulletinArray, $row);
-   }
- 
-   if (count($bulletinArray)) {
-       createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
-   }
+    /* fetch associative array */
+    while ($row = $result->fetch_assoc()) {
+        array_push($bulletinArray, $row);
+    }
 
-   /* free result set */
-   $result->free();
+    if (count($bulletinArray)) {
+        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+    }
+
+    /* free result set */
+    $result->free();
 }
 /* Ajoute les informations de la table Rubrique */
 if ($result = $mysqli->query($queryRubrique)) {
 
-   /* fetch associative array */
-   while ($row = $result->fetch_assoc()) {
-       array_push($rubriqueArray, $row);
-   }
- 
-   if (count($bulletinArray)) {
-       createXMLfile($rubriqueArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
-   }
+    /* fetch associative array */
+    while ($row = $result->fetch_assoc()) {
+        array_push($rubriqueArray, $row);
+    }
 
-   /* free result set */
-   $result->free();
+    if (count($bulletinArray)) {
+        createXMLfile($rubriqueArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+    }
+
+    /* free result set */
+    $result->free();
 }
 /* Ajoute les informations de la table Societe */
 if ($result = $mysqli->query($querySociete)) {
 
-   /* fetch associative array */
-   while ($row = $result->fetch_assoc()) {
-       array_push($societeArray, $row);
-   }
- 
-   if (count($societeArray)) {
-       createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
-   }
+    /* fetch associative array */
+    while ($row = $result->fetch_assoc()) {
+        array_push($societeArray, $row);
+    }
 
-   /* free result set */
-   $result->free();
+    if (count($societeArray)) {
+        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+    }
+
+    /* free result set */
+    $result->free();
 }
 
 /* close connection */
 $mysqli->close();
 
-function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray) {
-  
-    $filePath = 'book.xml';
+function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray)
+{
 
-    $dom = new DOMDocument('1.0', 'ISO-8859-1'); 
+    /* Gestion du formulaire */
+    $originalString = "1234567/000";
+    $formattedString = str_replace('/', '', $originalString);
+
+    $selectedTypePeriode = $_POST['typePeriode'];
+    $selectedAnnee = $_POST['annee'];
+    $selectedNumeroDeLaPeriode = $_POST['numeroDeLaPeriode'];
+
+    $selected = $selectedAnnee . nameFile() . $selectedNumeroDeLaPeriode;
+
+    $filePath = "DN-" . $selected .  '-' . $formattedString . '-' . '012' . '.xml';
+
+    $dom = new DOMDocument('1.0', 'ISO-8859-1');
 
     $doc = $dom->createElement('doc');
     $dom->appendChild($doc);
@@ -138,13 +161,13 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
     $periode = $dom->createElement('periode');
     $corps->appendChild($periode);
 
-    $typePeriode = $dom->createElement('type', 'TRIMESTRIEL');
+    $typePeriode = $dom->createElement('type', $selectedTypePeriode);
     $periode->appendChild($typePeriode);
 
-    $annee = $dom->createElement('annee', '2023');
+    $annee = $dom->createElement('annee', $selectedAnnee);
     $periode->appendChild($annee);
 
-     /* Rendre dynamique avec le formulaire */
+    /* Rendre dynamique avec le formulaire */
 
     $numero = $dom->createElement('numero', '1');
     $periode->appendChild($numero);
@@ -168,27 +191,26 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
     $corps->appendChild($employeur);
 
     for ($i = 0; $i < count($societeArray); $i++) {
-      $numeroEmployeur = $dom->createElement('numero', format_number($societeArray[$i]['numerocafat']));
-    $employeur->appendChild($numeroEmployeur);
+        $numeroEmployeur = $dom->createElement('numero', format_number($societeArray[$i]['numerocafat']));
+        $employeur->appendChild($numeroEmployeur);
 
-    $suffixe = $dom->createElement('suffixe', format_suffix($societeArray[$i]['numerocafat']));
-    $employeur->appendChild($suffixe);
+        $suffixe = $dom->createElement('suffixe', format_suffix($societeArray[$i]['numerocafat']));
+        $employeur->appendChild($suffixe);
 
-    $nomEmployeur = $dom->createElement('nom', $societeArray[$i]['enseigne']);
-    $employeur->appendChild($nomEmployeur);
+        $nomEmployeur = $dom->createElement('nom', $societeArray[$i]['enseigne']);
+        $employeur->appendChild($nomEmployeur);
 
-    $rid = $dom->createElement('rid', format_rid($societeArray[$i]['ridet']));
-    $employeur->appendChild($rid);
+        $rid = $dom->createElement('rid', format_rid($societeArray[$i]['ridet']));
+        $employeur->appendChild($rid);
 
-    $codeCotisation = $dom->createElement('codeCotisation', '001');
-    $employeur->appendChild($codeCotisation);
+        $codeCotisation = $dom->createElement('codeCotisation', '001');
+        $employeur->appendChild($codeCotisation);
 
-    $tauxATPrincipal = $dom->createElement('tauxATPrincipal', $societeArray[$i]['tauxat']);
-    $employeur->appendChild($tauxATPrincipal);
-
+        $tauxATPrincipal = $dom->createElement('tauxATPrincipal', $societeArray[$i]['tauxat']);
+        $employeur->appendChild($tauxATPrincipal);
     }
 
-    
+
     $assures = $dom->createElement('assures');
     $corps->appendChild($assures);
 
@@ -248,56 +270,72 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
     $deductions = $dom->createElement('deductions');
     $decompte->appendChild($deductions);
 
-     /* Corps */
+    /* Corps */
 
-    $dom->save($filePath); 
+    $dom->save($filePath);
 }
 
 
-function format_number($number) {
-   // Split the number into two parts: the main number and the suffix.
-   $number_parts = explode("/", $number);
-   $main_number = $number_parts[0];
- 
-   // Pad the main number with zeros to make it 4 digits long.
-   $main_number = str_pad($main_number, 4, "0", STR_PAD_LEFT);
- 
-   // Format the number into the desired format.
-   $formatted_number = sprintf($main_number);
- 
-   return $formatted_number;
- }
 
- function format_suffix($suffix) {
-   // Split the number into two parts: the main number and the suffix.
-   $number_parts = explode("/", $suffix);
-   $main_number = $number_parts[1];
- 
-   // Pad the main number with zeros to make it 4 digits long.
-   $main_number = str_pad($main_number, 3, "0", STR_PAD_LEFT);
- 
-   // Format the number into the desired format.
-   $formatted_number = sprintf($main_number);
- 
-   return $formatted_number;
- }
-
- function format_rid($rid) {
-   // Split the number into two parts: the main number and the suffix.
-   $number_parts = explode(".", $rid);
-   $main_number = $number_parts[0];
- 
-   // Pad the main number with zeros to make it 4 digits long.
-   $main_number = str_pad($main_number, 6, "0", STR_PAD_LEFT);
- 
-   // Format the number into the desired format.
-   $formatted_number = sprintf($main_number);
- 
-   return $formatted_number;
- }
+/* Formatage de données */
 
 
+function format_number($number)
+{
+    // Split the number into two parts: the main number and the suffix.
+    $number_parts = explode("/", $number);
+    $main_number = $number_parts[0];
+
+    // Pad the main number with zeros to make it 4 digits long.
+    $main_number = str_pad($main_number, 4, "0", STR_PAD_LEFT);
+
+    // Format the number into the desired format.
+    $formatted_number = sprintf($main_number);
+
+    return $formatted_number;
+}
+
+function format_suffix($suffix)
+{
+    // Split the number into two parts: the main number and the suffix.
+    $number_parts = explode("/", $suffix);
+    $main_number = $number_parts[1];
+
+    // Pad the main number with zeros to make it 4 digits long.
+    $main_number = str_pad($main_number, 3, "0", STR_PAD_LEFT);
+
+    // Format the number into the desired format.
+    $formatted_number = sprintf($main_number);
+
+    return $formatted_number;
+}
+
+function format_rid($rid)
+{
+    // Split the number into two parts: the main number and the suffix.
+    $number_parts = explode(".", $rid);
+    $main_number = $number_parts[0];
+
+    // Pad the main number with zeros to make it 4 digits long.
+    $main_number = str_pad($main_number, 6, "0", STR_PAD_LEFT);
+
+    // Format the number into the desired format.
+    $formatted_number = sprintf($main_number);
+
+    return $formatted_number;
+}
+
+/* Nom de fichier */
 
 
-
-?>
+function nameFile()
+{
+    $selectedTypePeriode = $_POST['typePeriode'];
+    if ($selectedTypePeriode === "ANNUELLE") {
+        return "A";
+    } elseif ($selectedTypePeriode === "MENSUELLE") {
+        return "M";
+    } elseif ($selectedTypePeriode === "TRIMESTRIELLE") {
+        return "T";
+    }
+}
