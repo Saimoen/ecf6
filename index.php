@@ -28,7 +28,7 @@ echo $selected;
 <body>
     <?php require_once 'includes/header.php' ?>
     <div class="container">
-        <form class="mt-5" method="POST" action="/">
+        <form class="mt-5" method="POST" action="genXML.php">
             <div class="mb-3">
 
                 <!-- Annee -->

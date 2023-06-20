@@ -1,93 +1,303 @@
 <?php
 
 /** create XML file */ 
-$mysqli = new mysqli("localhost", "Gregory", "Gregsaimoen12@", "dbbookstore");
+$mysqli = new mysqli("localhost", "Gregory", "Gregsaimoen12@", "ecfc6");
 
 /* check connection */
 if ($mysqli->connect_errno) {
-
-   echo "Connect failed ".$mysqli->connect_error;
-
-   exit();
+    echo "Connect failed ".$mysqli->connect_error;
+    exit();
 }
 
-$query = "SELECT id, title, author_name, price, ISBN, category FROM books";
+$queryBulletin = "SELECT id, salarie_id, periode, brut, net, nombre_heures FROM ecfc6.bulletin";
+$queryLigneBulletin = "SELECT id, numero, bulletin_id, rubrique_id, libelle, base, nombre, taux_salarial, montant_salarial, taux_patronal, montant_patronal FROM ecfc6.ligne_bulletin";
+$queryRubrique = "SELECT id, code, libelle, nombre, base, taux_salarial, montant_salarial, taux_patronal, montant_patronal, type FROM ecfc6.rubrique";
+$querySalaries = "SELECT id, nom, prenom, dnaissance, dembauche, drupture, numcafat FROM ecfc6.salaries";
+$querySociete = "SELECT id, numerocafat, enseigne, ridet, tauxat, adresse, commune, codepostal FROM ecfc6.societe";
 
-$booksArray = array();
+$bulletinArray = array();
+$ligneBulletinArray = array();
+$rubriqueArray = array();
+$salariesArray = array();
+$societeArray = array();
 
-if ($result = $mysqli->query($query)) {
+/* Ajoute les informations de la table Salaries */
+if ($result = $mysqli->query($querySalaries)) {
 
     /* fetch associative array */
     while ($row = $result->fetch_assoc()) {
-
-       array_push($booksArray, $row);
+        array_push($salariesArray, $row);
     }
   
-    if(count($booksArray)){
-
-         createXMLfile($booksArray);
-
-     }
+    if (count($salariesArray)) {
+        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+    }
 
     /* free result set */
     $result->free();
+}
+/* Ajoute les informations de la table Bulletin */
+if ($result = $mysqli->query($queryBulletin)) {
+
+   /* fetch associative array */
+   while ($row = $result->fetch_assoc()) {
+       array_push($bulletinArray, $row);
+   }
+ 
+   if (count($bulletinArray)) {
+       createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+   }
+
+   /* free result set */
+   $result->free();
+}
+/* Ajoute les informations de la table Rubrique */
+if ($result = $mysqli->query($queryRubrique)) {
+
+   /* fetch associative array */
+   while ($row = $result->fetch_assoc()) {
+       array_push($rubriqueArray, $row);
+   }
+ 
+   if (count($bulletinArray)) {
+       createXMLfile($rubriqueArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+   }
+
+   /* free result set */
+   $result->free();
+}
+/* Ajoute les informations de la table Societe */
+if ($result = $mysqli->query($querySociete)) {
+
+   /* fetch associative array */
+   while ($row = $result->fetch_assoc()) {
+       array_push($societeArray, $row);
+   }
+ 
+   if (count($societeArray)) {
+       createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+   }
+
+   /* free result set */
+   $result->free();
 }
 
 /* close connection */
 $mysqli->close();
 
-function createXMLfile($booksArray){
+function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray) {
   
-   $filePath = 'book.xml';
+    $filePath = 'book.xml';
 
-   $dom     = new DOMDocument('1.0', 'ISO-8859-1'); 
+    $dom = new DOMDocument('1.0', 'ISO-8859-1'); 
 
-   $root      = $dom->createElement('books'); 
+    $doc = $dom->createElement('doc');
+    $dom->appendChild($doc);
 
-   for($i=0; $i<count($booksArray); $i++){
-     
-     $bookId        =  $booksArray[$i]['id'];  
+    /* En-tête */
 
-     $bookName      =  htmlspecialchars($booksArray[$i]['title']); 
+    $entete = $dom->createElement('entete');
+    $doc->appendChild($entete);
 
-     $bookAuthor    =  $booksArray[$i]['author_name']; 
+    $type = $dom->createElement('type', 'DN');
+    $entete->appendChild($type);
 
-     $bookPrice     =  $booksArray[$i]['price']; 
+    $version = $dom->createElement('version', 'VERSION_2_0');
+    $entete->appendChild($version);
 
-     $bookISBN      =  $booksArray[$i]['ISBN']; 
+    $emetteur = $dom->createElement('emetteur', 'ATP');
+    $entete->appendChild($emetteur);
 
-     $bookCategory  =  $booksArray[$i]['category'];	
+    $dateGeneration = $dom->createElement('dateGeneration', '2023-01-17T15:30:18');
+    $entete->appendChild($dateGeneration);
 
-     $book = $dom->createElement('book');
+    $logiciel = $dom->createElement('logiciel');
+    $entete->appendChild($logiciel);
 
-     $book->setAttribute('id', $bookId);
+    $editeur = $dom->createElement('editeur', 'MONEDITEUR');
+    $logiciel->appendChild($editeur);
 
-     $name     = $dom->createElement('title', $bookName); 
+    $nom = $dom->createElement('nom', 'MONPROGICIEL');
+    $logiciel->appendChild($nom);
 
-     $book->appendChild($name); 
+    $versionLogiciel = $dom->createElement('version', '10.2.1');
+    $logiciel->appendChild($versionLogiciel);
 
-     $author   = $dom->createElement('author', $bookAuthor); 
+    $dateVersion = $dom->createElement('dateVersion', '2022-12-25');
+    $logiciel->appendChild($dateVersion);
 
-     $book->appendChild($author); 
+    /* En-tête */
 
-     $price    = $dom->createElement('price', $bookPrice); 
+    /* Corps */
 
-     $book->appendChild($price); 
+    $corps = $dom->createElement('corps');
+    $doc->appendChild($corps);
 
-     $isbn     = $dom->createElement('ISBN', $bookISBN); 
+    /* Rendre dynamique avec le formulaire */
 
-     $book->appendChild($isbn); 
-     
-     $category = $dom->createElement('category', $bookCategory); 
+    $periode = $dom->createElement('periode');
+    $corps->appendChild($periode);
 
-     $book->appendChild($category);
+    $typePeriode = $dom->createElement('type', 'TRIMESTRIEL');
+    $periode->appendChild($typePeriode);
+
+    $annee = $dom->createElement('annee', '2023');
+    $periode->appendChild($annee);
+
+     /* Rendre dynamique avec le formulaire */
+
+    $numero = $dom->createElement('numero', '1');
+    $periode->appendChild($numero);
+
+    $attributs = $dom->createElement('attributs');
+    $corps->appendChild($attributs);
+
+    $complementaire = $dom->createElement('complementaire', 'false');
+    $attributs->appendChild($complementaire);
+
+    $contratAlternance = $dom->createElement('contratAlternance', 'false');
+    $attributs->appendChild($contratAlternance);
+
+    $pasAssureRemunere = $dom->createElement('pasAssureRemunere', 'false');
+    $attributs->appendChild($pasAssureRemunere);
+
+    $pasDeReembauche = $dom->createElement('pasDeReembauche', 'false');
+    $attributs->appendChild($pasDeReembauche);
+
+    $employeur = $dom->createElement('employeur');
+    $corps->appendChild($employeur);
+
+    for ($i = 0; $i < count($societeArray); $i++) {
+      $numeroEmployeur = $dom->createElement('numero', format_number($societeArray[$i]['numerocafat']));
+    $employeur->appendChild($numeroEmployeur);
+
+    $suffixe = $dom->createElement('suffixe', format_suffix($societeArray[$i]['numerocafat']));
+    $employeur->appendChild($suffixe);
+
+    $nomEmployeur = $dom->createElement('nom', $societeArray[$i]['enseigne']);
+    $employeur->appendChild($nomEmployeur);
+
+    $rid = $dom->createElement('rid', format_rid($societeArray[$i]['ridet']));
+    $employeur->appendChild($rid);
+
+    $codeCotisation = $dom->createElement('codeCotisation', '001');
+    $employeur->appendChild($codeCotisation);
+
+    $tauxATPrincipal = $dom->createElement('tauxATPrincipal', $societeArray[$i]['tauxat']);
+    $employeur->appendChild($tauxATPrincipal);
+
+    }
+
+    
+    $assures = $dom->createElement('assures');
+    $corps->appendChild($assures);
+
+    for ($i = 0; $i < count($salariesArray); $i++) {
+        $assure = $dom->createElement('assure');
+        $assures->appendChild($assure);
+
+        $numeroAssure = $dom->createElement('numero', $salariesArray[$i]['numcafat']);
+        $assure->appendChild($numeroAssure);
+
+        $nomAssure = $dom->createElement('nom', $salariesArray[$i]['nom']);
+        $assure->appendChild($nomAssure);
+
+        $prenomsAssure = $dom->createElement('prenoms', $salariesArray[$i]['prenom']);
+        $assure->appendChild($prenomsAssure);
+
+        $dateNaissanceAssure = $dom->createElement('dateNaissance', $salariesArray[$i]['dnaissance']);
+        $assure->appendChild($dateNaissanceAssure);
+
+        $codeAT = $dom->createElement('codeAT', 'PRINCIPAL');
+        $assure->appendChild($codeAT);
+
+        $etablissementRID = $dom->createElement('etablissementRID', '123');
+        $assure->appendChild($etablissementRID);
+
+        $codeCommune = $dom->createElement('codeCommune', '09');
+        $assure->appendChild($codeCommune);
+
+        $nombreHeures = $dom->createElement('nombreHeures', $bulletinArray[$i]['nombre_heures']);
+        $assure->appendChild($nombreHeures);
+
+        $remuneration = $dom->createElement('remuneration', $bulletinArray[$i]['brut']);
+        $assure->appendChild($remuneration);
+
+        $assiettes = $dom->createElement('assiettes');
+        $assure->appendChild($assiettes);
+    }
+
+    $decompte = $dom->createElement('decompte');
+    $corps->appendChild($decompte);
+
+    $cotisations = $dom->createElement('cotisations');
+    $decompte->appendChild($cotisations);
+
+    $cotisation = $dom->createElement('cotisation');
+    $cotisations->appendChild($cotisation);
+
+    $typeCotisation = $dom->createElement('type', 'CCS');
+    $cotisation->appendChild($typeCotisation);
+
+    $assietteCotisation = $dom->createElement('assiette', '10000000');
+    $cotisation->appendChild($assietteCotisation);
+
+    $valeurCotisation = $dom->createElement('valeur', '200000');
+    $cotisation->appendChild($valeurCotisation);
+
+    $deductions = $dom->createElement('deductions');
+    $decompte->appendChild($deductions);
+
+     /* Corps */
+
+    $dom->save($filePath); 
+}
+
+
+function format_number($number) {
+   // Split the number into two parts: the main number and the suffix.
+   $number_parts = explode("/", $number);
+   $main_number = $number_parts[0];
  
-     $root->appendChild($book);
+   // Pad the main number with zeros to make it 4 digits long.
+   $main_number = str_pad($main_number, 4, "0", STR_PAD_LEFT);
+ 
+   // Format the number into the desired format.
+   $formatted_number = sprintf($main_number);
+ 
+   return $formatted_number;
+ }
 
-   }
+ function format_suffix($suffix) {
+   // Split the number into two parts: the main number and the suffix.
+   $number_parts = explode("/", $suffix);
+   $main_number = $number_parts[1];
+ 
+   // Pad the main number with zeros to make it 4 digits long.
+   $main_number = str_pad($main_number, 3, "0", STR_PAD_LEFT);
+ 
+   // Format the number into the desired format.
+   $formatted_number = sprintf($main_number);
+ 
+   return $formatted_number;
+ }
 
-   $dom->appendChild($root); 
+ function format_rid($rid) {
+   // Split the number into two parts: the main number and the suffix.
+   $number_parts = explode(".", $rid);
+   $main_number = $number_parts[0];
+ 
+   // Pad the main number with zeros to make it 4 digits long.
+   $main_number = str_pad($main_number, 6, "0", STR_PAD_LEFT);
+ 
+   // Format the number into the desired format.
+   $formatted_number = sprintf($main_number);
+ 
+   return $formatted_number;
+ }
 
-   $dom->save($filePath); 
 
- } 
+
+
+
+?>
