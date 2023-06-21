@@ -1,9 +1,4 @@
 <?php
-
-
-
-
-
 /* 
 
 Création du fichier XML
@@ -101,14 +96,19 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
 {
 
     /* Gestion du formulaire */
-    $originalString = "1234567/000";
+    $originalString = "120623/001";
     $formattedString = str_replace('/', '', $originalString);
 
     $selectedTypePeriode = $_POST['typePeriode'];
     $selectedAnnee = $_POST['annee'];
-    $selectedNumeroDeLaPeriode = $_POST['numeroDeLaPeriode'];
+    $selectedNumero = $_POST['numeroDeLaPeriode'];
 
-    $selected = $selectedAnnee . nameFile() . $selectedNumeroDeLaPeriode;
+    if(isset($selectedTypePeriode) && isset($selectedAnnee) && isset($selectedNumero)) {
+
+   
+
+
+    $selected = $selectedAnnee . nameFile() . formatPeriode();
 
     $filePath = "DN-" . $selected .  '-' . $formattedString . '-' . '012' . '.xml';
 
@@ -169,7 +169,7 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
 
     /* Rendre dynamique avec le formulaire */
 
-    $numero = $dom->createElement('numero', '1');
+    $numero = $dom->createElement('numero', $selectedNumero);
     $periode->appendChild($numero);
 
     $attributs = $dom->createElement('attributs');
@@ -239,7 +239,8 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
         $codeCommune = $dom->createElement('codeCommune', '09');
         $assure->appendChild($codeCommune);
 
-        $nombreHeures = $dom->createElement('nombreHeures', $bulletinArray[$i]['nombre_heures']);
+        $nombreHeures = $dom->createElement('nombreHeures', formatFloat($bulletinArray[$i]['nombre_heures']));
+        
         $assure->appendChild($nombreHeures);
 
         $remuneration = $dom->createElement('remuneration', $bulletinArray[$i]['brut']);
@@ -273,6 +274,9 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
     /* Corps */
 
     $dom->save($filePath);
+   } else {
+      header("HTTP/1.1 404 Not Found");
+   }
 }
 
 
@@ -331,11 +335,56 @@ function format_rid($rid)
 function nameFile()
 {
     $selectedTypePeriode = $_POST['typePeriode'];
-    if ($selectedTypePeriode === "ANNUELLE") {
+   
+
+    if ($selectedTypePeriode === "ANNUEL") {
         return "A";
-    } elseif ($selectedTypePeriode === "MENSUELLE") {
+    } elseif ($selectedTypePeriode === "MENSUEL") {
         return "M";
-    } elseif ($selectedTypePeriode === "TRIMESTRIELLE") {
+    } elseif ($selectedTypePeriode === "TRIMESTRIEL") {
         return "T";
     }
 }
+
+function formatPeriode() {
+   $selectedNumeroDeLaPeriode = $_POST['numeroDeLaPeriode'];
+   if($selectedNumeroDeLaPeriode === "1") {
+      return "01";
+    } elseif($selectedNumeroDeLaPeriode === "2") {
+      return "02";
+    } elseif($selectedNumeroDeLaPeriode === "3") {
+      return "03";
+    } elseif($selectedNumeroDeLaPeriode === "4") {
+      return "04";
+    } elseif($selectedNumeroDeLaPeriode === "5") {
+      return "05";
+    } elseif($selectedNumeroDeLaPeriode === "6") {
+      return "06";
+    } elseif($selectedNumeroDeLaPeriode === "7") {
+      return "07";
+    } elseif($selectedNumeroDeLaPeriode === "8") {
+      return "08";
+    } elseif($selectedNumeroDeLaPeriode === "9") {
+      return "09";
+    } elseif($selectedNumeroDeLaPeriode === "10") {
+      return "10";
+    } elseif($selectedNumeroDeLaPeriode === "11") {
+      return "11";
+    } elseif($selectedNumeroDeLaPeriode === "12") {
+      return "12";
+    }
+}
+
+
+function formatFloat($float) {
+   $number = number_format($float, 2, '.', '');
+   $length = strlen($number);
+
+   if ($length <= 6) {
+       return $number;
+   } else {
+       return substr($number, 0, 3) . '.' . substr($number, 3, 2);
+   }
+}
+
+
