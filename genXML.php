@@ -30,11 +30,17 @@ $querySalaries = "SELECT * FROM ecfc6.salaries";
 $querySociete = "SELECT * FROM ecfc6.societe";
 
 
+$queryAssiette = "SELECT SUM(base) base FROM ecfc6.ligne_bulletin;";
+
+$queryValeur = "";
+
+
 $bulletinArray = array();
 $ligneBulletinArray = array();
 $rubriqueArray = array();
 $salariesArray = array();
 $societeArray = array();
+$assietteArray = array();
 
 /* Ajoute les informations de la table Salaries */
 if ($result = $mysqli->query($querySalaries)) {
@@ -45,7 +51,7 @@ if ($result = $mysqli->query($querySalaries)) {
     }
 
     if (count($salariesArray)) {
-        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+        createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray);
     }
 
     /* free result set */
@@ -60,7 +66,7 @@ if ($result = $mysqli->query($queryBulletin)) {
     }
 
     if (count($bulletinArray)) {
-        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+        createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray);
     }
 
     /* free result set */
@@ -75,7 +81,7 @@ if ($result = $mysqli->query($queryRubrique)) {
     }
 
     if (count($rubriqueArray)) {
-        createXMLfile($rubriqueArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+        createXMLfile($rubriqueArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray);
     }
 
     /* free result set */
@@ -90,7 +96,22 @@ if ($result = $mysqli->query($querySociete)) {
     }
 
     if (count($societeArray)) {
-        createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
+        createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray);
+    }
+
+    /* free result set */
+    $result->free();
+}
+
+if ($result = $mysqli->query($queryAssiette)) {
+
+    /* fetch associative array */
+    while ($row = $result->fetch_assoc()) {
+        array_push($assietteArray, $row);
+    }
+
+    if (count($assietteArray)) {
+        createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray);
     }
 
     /* free result set */
@@ -101,7 +122,7 @@ if ($result = $mysqli->query($querySociete)) {
 $mysqli->close();
 
 
-function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray)
+function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubriqueArray, $societeArray)
 {
     /* Gestion du formulaire */
     $originalString = "120623/001";
@@ -335,19 +356,6 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
-/*                  $tranche = $dom->createElement('tranche', 'TRANCHE_1');
-                $assiettes->appendChild($tranche);
-
-                $dateEmbauche = $dom->createElement('dateEmbauche', '2023-01-01');
-                $assiettes->appendChild($dateEmbauche);
-
-                $dateRupture = $dom->createElement('dateRupture', '2023-01-01');
-                $assiettes->appendChild($dateRupture);
-
-                $observations = $dom->createElement('observations', 'Rien à signaler');
-                $assiettes->appendChild($observations); */
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 56) {
@@ -401,7 +409,7 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
 
                 $type = $dom->createElement('type', 'RUAMM');
                 $tranche = $dom->createElement('tranche', 'TRANCHE_1');
-                $assiette = $dom->createElement('assiette', '19998888888');
+                $assiette = $dom->createElement('assiette', $assietteArray[0]['base']);
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
 
                 $cotisation->appendChild($type);
@@ -536,11 +544,8 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
                 $cotisation->appendChild($valeur);
 
                 $totalCotisations = $dom->createElement('totalCotisations', '1365659');
-      
-                $montantAPayer = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
 
                 $decompte->appendChild($totalCotisations);
-                $decompte->appendChild($montantAPayer);
 
                 $deductions = $dom->createElement('deductions');
                 $decompte->appendChild($deductions);
