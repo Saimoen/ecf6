@@ -1,14 +1,7 @@
 <?php
-/* 
-
-Création du fichier XML
-
-*/
-
-
 
 /** create XML file */
-$mysqli = new mysqli("localhost", "Gregory", "Gregsaimoen12@", "ecfc6");
+$mysqli = new mysqli("localhost", "root", "Gregsaimoen12@", "ecfc6");
 
 /* check connection */
 if ($mysqli->connect_errno) {
@@ -18,22 +11,13 @@ if ($mysqli->connect_errno) {
 
 $queryBulletin = "SELECT * FROM ecfc6.bulletin";
 $queryLigneBulletin = "SELECT * FROM ecfc6.ligne_bulletin";
-
-
-
 $queryRubrique = "SELECT distinct b.*, s.*, lb.*
 FROM bulletin b
 JOIN salaries s ON b.salarie_id = s.id
 JOIN ligne_bulletin lb ON lb.bulletin_id = b.id";
-
 $querySalaries = "SELECT * FROM ecfc6.salaries";
 $querySociete = "SELECT * FROM ecfc6.societe";
-
-
 $queryAssiette = "SELECT SUM(base) base FROM ecfc6.ligne_bulletin;";
-
-$queryValeur = "";
-
 
 $bulletinArray = array();
 $ligneBulletinArray = array();
@@ -182,8 +166,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
         $corps = $dom->createElement('corps');
         $doc->appendChild($corps);
 
-        /* Rendre dynamique avec le formulaire */
-
         $periode = $dom->createElement('periode');
         $corps->appendChild($periode);
 
@@ -192,8 +174,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
         $annee = $dom->createElement('annee', $selectedAnnee);
         $periode->appendChild($annee);
-
-        /* Rendre dynamique avec le formulaire */
 
         $numero = $dom->createElement('numero', $selectedNumero);
         $periode->appendChild($numero);
@@ -282,8 +262,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 67) {
@@ -295,7 +273,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 56) {
@@ -307,7 +284,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 64) {
@@ -319,7 +295,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 65) {
@@ -331,7 +306,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 56) {
@@ -343,8 +317,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
-               
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 68) {
@@ -367,7 +339,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
 
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
-
             }
 
             if ($rubriqueArray[$i]['rubrique_id'] = 62) {
@@ -380,19 +351,6 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
                 $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
                 $assiette->appendChild($valeur);
             }
-
-            if ($rubriqueArray[$i]['rubrique_id'] = 66) {
-
-                $assiette = $dom->createElement('assiette');
-                $assiettes->appendChild($assiette);
-                $type = $dom->createElement('type', 'CRE');
-                $assiette->appendChild($type);
-
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-                $assiette->appendChild($valeur);
-            }
-
-            
         }
 
         /* Décompte */
@@ -401,169 +359,150 @@ function createXMLfile($salariesArray, $bulletinArray, $assietteArray, $rubrique
         $cotisations = $dom->createElement('cotisations');
 
 
-                $corps->appendChild($decompte);
-                $decompte->appendChild($cotisations);
+        $corps->appendChild($decompte);
+        $decompte->appendChild($cotisations);
 
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
 
-                $type = $dom->createElement('type', 'RUAMM');
-                $tranche = $dom->createElement('tranche', 'TRANCHE_1');
-                $assiette = $dom->createElement('assiette', $assietteArray[0]['base']);
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+        $type = $dom->createElement('type', 'RUAMM');
+        $tranche = $dom->createElement('tranche', 'TRANCHE_1');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 15.52)));
 
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($tranche);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-        
-            
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'RUAMM');
-                $tranche = $dom->createElement('tranche', 'TRANCHE_2');
-                $assiette = $dom->createElement('assiette', '19998888888');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($tranche);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-            
-
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'FIAF');
-                $assiette = $dom->createElement('assiette', '1999988');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-            
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'RETRAITE');
-                $assiette = $dom->createElement('assiette', '1999988');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'ATMP_PRINCIPAL');
-                $assiette = $dom->createElement('assiette', '1999988');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-    
-
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'CRE');
-                $assiette = $dom->createElement('assiette', '1999988');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($tranche);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
 
 
-                $corps->appendChild($decompte);
+        $corps->appendChild($decompte);
 
-                $decompte->appendChild($cotisations);
+        $decompte->appendChild($cotisations);
 
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
 
-                $type = $dom->createElement('type', 'FORMATION_PROFESSIONNELLE');
-                $assiette = $dom->createElement('assiette', '19998');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+        $type = $dom->createElement('type', 'RUAMM');
+        $tranche = $dom->createElement('tranche', 'TRANCHE_2');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 5)));
 
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'FSH');
-                $assiette = $dom->createElement('assiette', '1999998');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-
-                $corps->appendChild($decompte);
-
-                $decompte->appendChild($cotisations);
-
-                $cotisation = $dom->createElement('cotisation');
-                $cotisations->appendChild($cotisation);
-
-                $type = $dom->createElement('type', 'FDS');
-                $assiette = $dom->createElement('assiette', '199999888');
-                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
-
-                $cotisation->appendChild($type);
-                $cotisation->appendChild($assiette);
-                $cotisation->appendChild($valeur);
-
-                $totalCotisations = $dom->createElement('totalCotisations', '1365659');
-
-                $decompte->appendChild($totalCotisations);
-
-                $deductions = $dom->createElement('deductions');
-                $decompte->appendChild($deductions);
-
-                $deduction = $dom->createElement('deduction');
-                $deductions->appendChild($deduction);
-
-                $typeD = $dom->createElement('type', 'ACOMPTE');
-                $deduction->appendChild($typeD);
-
-                $valeurD = $dom->createElement('valeur', '3203');
-                $deduction->appendChild($valeurD);
-
-                
-               
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($tranche);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
 
 
+        $corps->appendChild($decompte);
 
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'FIAF');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 0.2)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'RETRAITE');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 14)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'ATMP_PRINCIPAL');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 0.72)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'CCS');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 2)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'FORMATION_PROFESSIONNELLE');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 0.25)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'FSH');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 2)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+        $corps->appendChild($decompte);
+
+        $decompte->appendChild($cotisations);
+
+        $cotisation = $dom->createElement('cotisation');
+        $cotisations->appendChild($cotisation);
+
+        $type = $dom->createElement('type', 'FDS');
+        $assiette = $dom->createElement('assiette', round($assietteArray[0]['base']));
+        $valeur = $dom->createElement('valeur', round(calculValeur($rubriqueArray[$i]['base'], 0.075)));
+
+        $cotisation->appendChild($type);
+        $cotisation->appendChild($assiette);
+        $cotisation->appendChild($valeur);
+
+        $deductions = $dom->createElement('deductions');
+        $decompte->appendChild($deductions);
 
         /* Corps */
 
@@ -681,4 +620,9 @@ function formatFloat($float)
     } else {
         return substr($number, 0, 3) . '.' . substr($number, 3, 2);
     }
+}
+
+function calculValeur($base, $taux)
+{
+    return ($base * $taux) / 100;
 }
