@@ -16,11 +16,19 @@ if ($mysqli->connect_errno) {
     exit();
 }
 
-$queryBulletin = "SELECT id, salarie_id, periode, brut, net, nombre_heures FROM ecfc6.bulletin";
-$queryLigneBulletin = "SELECT id, numero, bulletin_id, rubrique_id, libelle, base, nombre, taux_salarial, montant_salarial, taux_patronal, montant_patronal FROM ecfc6.ligne_bulletin";
-$queryRubrique = "SELECT id, code, libelle, nombre, base, taux_salarial, montant_salarial, taux_patronal, montant_patronal, type FROM ecfc6.rubrique";
-$querySalaries = "SELECT id, nom, prenom, dnaissance, dembauche, drupture, numcafat FROM ecfc6.salaries";
-$querySociete = "SELECT id, numerocafat, enseigne, ridet, tauxat, adresse, commune, codepostal FROM ecfc6.societe";
+$queryBulletin = "SELECT * FROM ecfc6.bulletin";
+$queryLigneBulletin = "SELECT * FROM ecfc6.ligne_bulletin";
+
+
+
+$queryRubrique = "SELECT distinct b.*, s.*, lb.*
+FROM bulletin b
+JOIN salaries s ON b.salarie_id = s.id
+JOIN ligne_bulletin lb ON lb.bulletin_id = b.id";
+
+$querySalaries = "SELECT * FROM ecfc6.salaries";
+$querySociete = "SELECT * FROM ecfc6.societe";
+
 
 $bulletinArray = array();
 $ligneBulletinArray = array();
@@ -66,7 +74,7 @@ if ($result = $mysqli->query($queryRubrique)) {
         array_push($rubriqueArray, $row);
     }
 
-    if (count($bulletinArray)) {
+    if (count($rubriqueArray)) {
         createXMLfile($rubriqueArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray);
     }
 
@@ -92,9 +100,9 @@ if ($result = $mysqli->query($querySociete)) {
 /* close connection */
 $mysqli->close();
 
+
 function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rubriqueArray, $societeArray)
 {
-
     /* Gestion du formulaire */
     $originalString = "120623/001";
     $formattedString = str_replace('/', '', $originalString);
@@ -103,180 +111,461 @@ function createXMLfile($salariesArray, $bulletinArray, $ligneBulletinArray, $rub
     $selectedAnnee = $_POST['annee'];
     $selectedNumero = $_POST['numeroDeLaPeriode'];
 
-    if(isset($selectedTypePeriode) && isset($selectedAnnee) && isset($selectedNumero)) {
+    if (isset($selectedTypePeriode) && isset($selectedAnnee) && isset($selectedNumero)) {
 
-   
+        $selected = $selectedAnnee . nameFile() . formatPeriode();
 
+        $filePath = "DN-" . $selected .  '-' . $formattedString . '-' . '012' . '.xml';
 
-    $selected = $selectedAnnee . nameFile() . formatPeriode();
+        $dom = new DOMDocument('1.0', 'ISO-8859-1');
 
-    $filePath = "DN-" . $selected .  '-' . $formattedString . '-' . '012' . '.xml';
+        $doc = $dom->createElement('doc');
+        $dom->appendChild($doc);
 
-    $dom = new DOMDocument('1.0', 'ISO-8859-1');
+        /* En-tête */
 
-    $doc = $dom->createElement('doc');
-    $dom->appendChild($doc);
+        $entete = $dom->createElement('entete');
+        $doc->appendChild($entete);
 
-    /* En-tête */
+        $type = $dom->createElement('type', 'DN');
+        $entete->appendChild($type);
 
-    $entete = $dom->createElement('entete');
-    $doc->appendChild($entete);
+        $version = $dom->createElement('version', 'VERSION_2_0');
+        $entete->appendChild($version);
 
-    $type = $dom->createElement('type', 'DN');
-    $entete->appendChild($type);
+        $emetteur = $dom->createElement('emetteur', 'Comptagest');
+        $entete->appendChild($emetteur);
 
-    $version = $dom->createElement('version', 'VERSION_2_0');
-    $entete->appendChild($version);
+        $dateGeneration = $dom->createElement('dateGeneration', '2023-01-17T15:30:18');
+        $entete->appendChild($dateGeneration);
 
-    $emetteur = $dom->createElement('emetteur', 'ATP');
-    $entete->appendChild($emetteur);
+        $logiciel = $dom->createElement('logiciel');
+        $entete->appendChild($logiciel);
 
-    $dateGeneration = $dom->createElement('dateGeneration', '2023-01-17T15:30:18');
-    $entete->appendChild($dateGeneration);
+        $editeur = $dom->createElement('editeur', 'MONEDITEUR');
+        $logiciel->appendChild($editeur);
 
-    $logiciel = $dom->createElement('logiciel');
-    $entete->appendChild($logiciel);
+        $nom = $dom->createElement('nom', 'MONPROGICIEL');
+        $logiciel->appendChild($nom);
 
-    $editeur = $dom->createElement('editeur', 'MONEDITEUR');
-    $logiciel->appendChild($editeur);
+        $versionLogiciel = $dom->createElement('version', '10.2.1');
+        $logiciel->appendChild($versionLogiciel);
 
-    $nom = $dom->createElement('nom', 'MONPROGICIEL');
-    $logiciel->appendChild($nom);
+        $dateVersion = $dom->createElement('dateVersion', '2022-12-25');
+        $logiciel->appendChild($dateVersion);
 
-    $versionLogiciel = $dom->createElement('version', '10.2.1');
-    $logiciel->appendChild($versionLogiciel);
+        /* En-tête */
 
-    $dateVersion = $dom->createElement('dateVersion', '2022-12-25');
-    $logiciel->appendChild($dateVersion);
+        /* Corps */
 
-    /* En-tête */
+        $corps = $dom->createElement('corps');
+        $doc->appendChild($corps);
 
-    /* Corps */
+        /* Rendre dynamique avec le formulaire */
 
-    $corps = $dom->createElement('corps');
-    $doc->appendChild($corps);
+        $periode = $dom->createElement('periode');
+        $corps->appendChild($periode);
 
-    /* Rendre dynamique avec le formulaire */
+        $typePeriode = $dom->createElement('type', $selectedTypePeriode);
+        $periode->appendChild($typePeriode);
 
-    $periode = $dom->createElement('periode');
-    $corps->appendChild($periode);
+        $annee = $dom->createElement('annee', $selectedAnnee);
+        $periode->appendChild($annee);
 
-    $typePeriode = $dom->createElement('type', $selectedTypePeriode);
-    $periode->appendChild($typePeriode);
+        /* Rendre dynamique avec le formulaire */
 
-    $annee = $dom->createElement('annee', $selectedAnnee);
-    $periode->appendChild($annee);
+        $numero = $dom->createElement('numero', $selectedNumero);
+        $periode->appendChild($numero);
 
-    /* Rendre dynamique avec le formulaire */
+        $attributs = $dom->createElement('attributs');
+        $corps->appendChild($attributs);
 
-    $numero = $dom->createElement('numero', $selectedNumero);
-    $periode->appendChild($numero);
+        $complementaire = $dom->createElement('complementaire', 'false');
+        $attributs->appendChild($complementaire);
 
-    $attributs = $dom->createElement('attributs');
-    $corps->appendChild($attributs);
+        $contratAlternance = $dom->createElement('contratAlternance', 'false');
+        $attributs->appendChild($contratAlternance);
 
-    $complementaire = $dom->createElement('complementaire', 'false');
-    $attributs->appendChild($complementaire);
+        $pasAssureRemunere = $dom->createElement('pasAssureRemunere', 'false');
+        $attributs->appendChild($pasAssureRemunere);
 
-    $contratAlternance = $dom->createElement('contratAlternance', 'false');
-    $attributs->appendChild($contratAlternance);
+        $pasDeReembauche = $dom->createElement('pasDeReembauche', 'false');
+        $attributs->appendChild($pasDeReembauche);
 
-    $pasAssureRemunere = $dom->createElement('pasAssureRemunere', 'false');
-    $attributs->appendChild($pasAssureRemunere);
+        $employeur = $dom->createElement('employeur');
+        $corps->appendChild($employeur);
 
-    $pasDeReembauche = $dom->createElement('pasDeReembauche', 'false');
-    $attributs->appendChild($pasDeReembauche);
+        for ($i = 0; $i < count($societeArray); $i++) {
+            $numeroEmployeur = $dom->createElement('numero', format_number($societeArray[$i]['numerocafat']));
+            $employeur->appendChild($numeroEmployeur);
 
-    $employeur = $dom->createElement('employeur');
-    $corps->appendChild($employeur);
+            $suffixe = $dom->createElement('suffixe', '001');
+            $employeur->appendChild($suffixe);
 
-    for ($i = 0; $i < count($societeArray); $i++) {
-        $numeroEmployeur = $dom->createElement('numero', format_number($societeArray[$i]['numerocafat']));
-        $employeur->appendChild($numeroEmployeur);
+            $nomEmployeur = $dom->createElement('nom', $societeArray[$i]['enseigne']);
+            $employeur->appendChild($nomEmployeur);
 
-        $suffixe = $dom->createElement('suffixe', format_suffix($societeArray[$i]['numerocafat']));
-        $employeur->appendChild($suffixe);
+            $rid = $dom->createElement('rid', format_rid($societeArray[$i]['ridet']));
+            $employeur->appendChild($rid);
 
-        $nomEmployeur = $dom->createElement('nom', $societeArray[$i]['enseigne']);
-        $employeur->appendChild($nomEmployeur);
+            $codeCotisation = $dom->createElement('codeCotisation', '001');
+            $employeur->appendChild($codeCotisation);
 
-        $rid = $dom->createElement('rid', format_rid($societeArray[$i]['ridet']));
-        $employeur->appendChild($rid);
-
-        $codeCotisation = $dom->createElement('codeCotisation', '001');
-        $employeur->appendChild($codeCotisation);
-
-        $tauxATPrincipal = $dom->createElement('tauxATPrincipal', $societeArray[$i]['tauxat']);
-        $employeur->appendChild($tauxATPrincipal);
-    }
+            $tauxATPrincipal = $dom->createElement('tauxATPrincipal', $societeArray[$i]['tauxat']);
+            $employeur->appendChild($tauxATPrincipal);
+        }
 
 
-    $assures = $dom->createElement('assures');
-    $corps->appendChild($assures);
+        $assures = $dom->createElement('assures');
+        $corps->appendChild($assures);
 
-    for ($i = 0; $i < count($salariesArray); $i++) {
-        $assure = $dom->createElement('assure');
-        $assures->appendChild($assure);
+        for ($i = 0; $i < count($salariesArray); $i++) {
+            $assure = $dom->createElement('assure');
+            $assures->appendChild($assure);
 
-        $numeroAssure = $dom->createElement('numero', $salariesArray[$i]['numcafat']);
-        $assure->appendChild($numeroAssure);
+            $numeroAssure = $dom->createElement('numero', $salariesArray[$i]['numcafat']);
+            $assure->appendChild($numeroAssure);
 
-        $nomAssure = $dom->createElement('nom', $salariesArray[$i]['nom']);
-        $assure->appendChild($nomAssure);
+            $nomAssure = $dom->createElement('nom', $salariesArray[$i]['nom']);
+            $assure->appendChild($nomAssure);
 
-        $prenomsAssure = $dom->createElement('prenoms', $salariesArray[$i]['prenom']);
-        $assure->appendChild($prenomsAssure);
+            $prenomsAssure = $dom->createElement('prenoms', $salariesArray[$i]['prenom']);
+            $assure->appendChild($prenomsAssure);
 
-        $dateNaissanceAssure = $dom->createElement('dateNaissance', $salariesArray[$i]['dnaissance']);
-        $assure->appendChild($dateNaissanceAssure);
+            $dateNaissanceAssure = $dom->createElement('dateNaissance', $salariesArray[$i]['dnaissance']);
+            $assure->appendChild($dateNaissanceAssure);
 
-        $codeAT = $dom->createElement('codeAT', 'PRINCIPAL');
-        $assure->appendChild($codeAT);
+            $codeAT = $dom->createElement('codeAT', 'PRINCIPAL');
+            $assure->appendChild($codeAT);
 
-        $etablissementRID = $dom->createElement('etablissementRID', '123');
-        $assure->appendChild($etablissementRID);
+            $etablissementRID = $dom->createElement('etablissementRID', '001');
+            $assure->appendChild($etablissementRID);
 
-        $codeCommune = $dom->createElement('codeCommune', '09');
-        $assure->appendChild($codeCommune);
+            $codeCommune = $dom->createElement('codeCommune', '05');
+            $assure->appendChild($codeCommune);
 
-        $nombreHeures = $dom->createElement('nombreHeures', formatFloat($bulletinArray[$i]['nombre_heures']));
+            $nombreHeures = $dom->createElement('nombreHeures', formatFloat($bulletinArray[$i]['nombre_heures']));
+            $assure->appendChild($nombreHeures);
+
+            $remuneration = $dom->createElement('remuneration', $bulletinArray[$i]['brut']);
+
+            $assiettes = $dom->createElement('assiettes');
+            $assure->appendChild($assiettes);
+
+            $assure->appendChild($remuneration);
+            if ($rubriqueArray[$i]['rubrique_id'] = 57) {
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'RUAMM');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 67) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'FIAF');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 56) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'RETRAITE');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 64) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'FORMATION_PROFESSIONNELLE');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 65) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'FSH');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 56) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'PRESTATIONS_FAMILIALES');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+               
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 68) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'FDS');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+/*                  $tranche = $dom->createElement('tranche', 'TRANCHE_1');
+                $assiettes->appendChild($tranche);
+
+                $dateEmbauche = $dom->createElement('dateEmbauche', '2023-01-01');
+                $assiettes->appendChild($dateEmbauche);
+
+                $dateRupture = $dom->createElement('dateRupture', '2023-01-01');
+                $assiettes->appendChild($dateRupture);
+
+                $observations = $dom->createElement('observations', 'Rien à signaler');
+                $assiettes->appendChild($observations); */
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 56) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'CHOMAGE');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 62) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'ATMP');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+            }
+
+            if ($rubriqueArray[$i]['rubrique_id'] = 66) {
+
+                $assiette = $dom->createElement('assiette');
+                $assiettes->appendChild($assiette);
+                $type = $dom->createElement('type', 'CRE');
+                $assiette->appendChild($type);
+
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+                $assiette->appendChild($valeur);
+            }
+
+            
+        }
+
+        /* Décompte */
+
+        $decompte = $dom->createElement('decompte');
+        $cotisations = $dom->createElement('cotisations');
+
+
+                $corps->appendChild($decompte);
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'RUAMM');
+                $tranche = $dom->createElement('tranche', 'TRANCHE_1');
+                $assiette = $dom->createElement('assiette', '19998888888');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($tranche);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
         
-        $assure->appendChild($nombreHeures);
+            
+                $corps->appendChild($decompte);
 
-        $remuneration = $dom->createElement('remuneration', $bulletinArray[$i]['brut']);
-        $assure->appendChild($remuneration);
+                $decompte->appendChild($cotisations);
 
-        $assiettes = $dom->createElement('assiettes');
-        $assure->appendChild($assiettes);
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'RUAMM');
+                $tranche = $dom->createElement('tranche', 'TRANCHE_2');
+                $assiette = $dom->createElement('assiette', '19998888888');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($tranche);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+            
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'FIAF');
+                $assiette = $dom->createElement('assiette', '1999988');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+            
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'RETRAITE');
+                $assiette = $dom->createElement('assiette', '1999988');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'ATMP_PRINCIPAL');
+                $assiette = $dom->createElement('assiette', '1999988');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+    
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'CRE');
+                $assiette = $dom->createElement('assiette', '1999988');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'FORMATION_PROFESSIONNELLE');
+                $assiette = $dom->createElement('assiette', '19998');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'FSH');
+                $assiette = $dom->createElement('assiette', '1999998');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+
+                $corps->appendChild($decompte);
+
+                $decompte->appendChild($cotisations);
+
+                $cotisation = $dom->createElement('cotisation');
+                $cotisations->appendChild($cotisation);
+
+                $type = $dom->createElement('type', 'FDS');
+                $assiette = $dom->createElement('assiette', '199999888');
+                $valeur = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $cotisation->appendChild($type);
+                $cotisation->appendChild($assiette);
+                $cotisation->appendChild($valeur);
+
+                $totalCotisations = $dom->createElement('totalCotisations', '1365659');
+      
+                $montantAPayer = $dom->createElement('valeur', round($rubriqueArray[$i]['base']));
+
+                $decompte->appendChild($totalCotisations);
+                $decompte->appendChild($montantAPayer);
+
+                $deductions = $dom->createElement('deductions');
+                $decompte->appendChild($deductions);
+
+                $deduction = $dom->createElement('deduction');
+                $deductions->appendChild($deduction);
+
+                $typeD = $dom->createElement('type', 'ACOMPTE');
+                $deduction->appendChild($typeD);
+
+                $valeurD = $dom->createElement('valeur', '3203');
+                $deduction->appendChild($valeurD);
+
+                
+               
+
+
+
+
+        /* Corps */
+
+        $dom->save($filePath);
+    } else {
+        header("HTTP/1.1 404 Not Found");
     }
-
-    $decompte = $dom->createElement('decompte');
-    $corps->appendChild($decompte);
-
-    $cotisations = $dom->createElement('cotisations');
-    $decompte->appendChild($cotisations);
-
-    $cotisation = $dom->createElement('cotisation');
-    $cotisations->appendChild($cotisation);
-
-    $typeCotisation = $dom->createElement('type', 'CCS');
-    $cotisation->appendChild($typeCotisation);
-
-    $assietteCotisation = $dom->createElement('assiette', '10000000');
-    $cotisation->appendChild($assietteCotisation);
-
-    $valeurCotisation = $dom->createElement('valeur', '200000');
-    $cotisation->appendChild($valeurCotisation);
-
-    $deductions = $dom->createElement('deductions');
-    $decompte->appendChild($deductions);
-
-    /* Corps */
-
-    $dom->save($filePath);
-   } else {
-      header("HTTP/1.1 404 Not Found");
-   }
 }
 
 
@@ -335,7 +624,7 @@ function format_rid($rid)
 function nameFile()
 {
     $selectedTypePeriode = $_POST['typePeriode'];
-   
+
 
     if ($selectedTypePeriode === "ANNUEL") {
         return "A";
@@ -346,45 +635,45 @@ function nameFile()
     }
 }
 
-function formatPeriode() {
-   $selectedNumeroDeLaPeriode = $_POST['numeroDeLaPeriode'];
-   if($selectedNumeroDeLaPeriode === "1") {
-      return "01";
-    } elseif($selectedNumeroDeLaPeriode === "2") {
-      return "02";
-    } elseif($selectedNumeroDeLaPeriode === "3") {
-      return "03";
-    } elseif($selectedNumeroDeLaPeriode === "4") {
-      return "04";
-    } elseif($selectedNumeroDeLaPeriode === "5") {
-      return "05";
-    } elseif($selectedNumeroDeLaPeriode === "6") {
-      return "06";
-    } elseif($selectedNumeroDeLaPeriode === "7") {
-      return "07";
-    } elseif($selectedNumeroDeLaPeriode === "8") {
-      return "08";
-    } elseif($selectedNumeroDeLaPeriode === "9") {
-      return "09";
-    } elseif($selectedNumeroDeLaPeriode === "10") {
-      return "10";
-    } elseif($selectedNumeroDeLaPeriode === "11") {
-      return "11";
-    } elseif($selectedNumeroDeLaPeriode === "12") {
-      return "12";
+function formatPeriode()
+{
+    $selectedNumeroDeLaPeriode = $_POST['numeroDeLaPeriode'];
+    if ($selectedNumeroDeLaPeriode === "1") {
+        return "01";
+    } elseif ($selectedNumeroDeLaPeriode === "2") {
+        return "02";
+    } elseif ($selectedNumeroDeLaPeriode === "3") {
+        return "03";
+    } elseif ($selectedNumeroDeLaPeriode === "4") {
+        return "04";
+    } elseif ($selectedNumeroDeLaPeriode === "5") {
+        return "05";
+    } elseif ($selectedNumeroDeLaPeriode === "6") {
+        return "06";
+    } elseif ($selectedNumeroDeLaPeriode === "7") {
+        return "07";
+    } elseif ($selectedNumeroDeLaPeriode === "8") {
+        return "08";
+    } elseif ($selectedNumeroDeLaPeriode === "9") {
+        return "09";
+    } elseif ($selectedNumeroDeLaPeriode === "10") {
+        return "10";
+    } elseif ($selectedNumeroDeLaPeriode === "11") {
+        return "11";
+    } elseif ($selectedNumeroDeLaPeriode === "12") {
+        return "12";
     }
 }
 
 
-function formatFloat($float) {
-   $number = number_format($float, 2, '.', '');
-   $length = strlen($number);
+function formatFloat($float)
+{
+    $number = number_format($float, 2, '.', '');
+    $length = strlen($number);
 
-   if ($length <= 6) {
-       return $number;
-   } else {
-       return substr($number, 0, 3) . '.' . substr($number, 3, 2);
-   }
+    if ($length <= 6) {
+        return $number;
+    } else {
+        return substr($number, 0, 3) . '.' . substr($number, 3, 2);
+    }
 }
-
-
